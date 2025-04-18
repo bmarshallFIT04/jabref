@@ -6,6 +6,11 @@ import org.jabref.logic.l10n.Localization;
  * @implNote Cannot be sorted alphabetically, as {@link KeyBindingRepository#getKeyCombination(KeyBinding)} iterates over the enum in order and returns the first match.
  */
 public enum KeyBinding {
+    // Change - Brianna
+    FOCUS_FIELD_BY_NAME("Focus field by name", "ctrl+j", "ctrl+j", KeyBindingCategory.EDIT),
+    // - Brianna
+
+    
     EDITOR_DELETE("Delete", Localization.lang("Delete text"), "", KeyBindingCategory.EDITOR),
     // DELETE BACKWARDS = Rubout
     EDITOR_BACKWARD("Move caret left", Localization.lang("Move caret left"), "", KeyBindingCategory.EDITOR),
