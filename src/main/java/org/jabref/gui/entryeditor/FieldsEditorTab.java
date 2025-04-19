@@ -60,7 +60,8 @@ abstract class FieldsEditorTab extends TabWithPreviewPanel {
     private final UndoManager undoManager;
 
     private Collection<Field> fields = new ArrayList<>();
-
+    private final List<FieldEditorFX> fieldEditors = new ArrayList<>();  // Change - Brianna
+    
     @SuppressWarnings("FieldCanBeLocal")
     private Subscription dividerPositionSubscription;
 
@@ -83,6 +84,12 @@ abstract class FieldsEditorTab extends TabWithPreviewPanel {
         this.journalAbbreviationRepository = Objects.requireNonNull(journalAbbreviationRepository);
     }
 
+    // Change - Brianna
+    public List<FieldEditorFX> getFieldEditors() {
+        return fieldEditors;
+    }
+    // end - Brianna
+    
     private static void addColumn(GridPane gridPane, int columnIndex, List<Label> nodes) {
         gridPane.addColumn(columnIndex, nodes.toArray(new Node[0]));
     }
@@ -150,6 +157,10 @@ abstract class FieldsEditorTab extends TabWithPreviewPanel {
                 undoAction,
                 redoAction);
         fieldEditor.bindToEntry(entry);
+        // Change - Brianna
+        fieldEditor.getNode().setAccessibleText(field.getDisplayName());
+        fieldEditors.add(fieldEditor);
+        // end - Brianna
         editors.put(field, fieldEditor);
         return new FieldNameLabel(field);
     }
