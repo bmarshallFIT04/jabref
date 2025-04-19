@@ -1,5 +1,21 @@
 package org.jabref.gui.entryeditor;
 
+// Change - Brianna
+import javafx.scene.input.KeyCombination;
+import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
+import javafx.geometry.Bounds;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.VBox;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.stage.Popup;
+import org.jabref.gui.fieldeditors.FieldEditorFX;
+import java.util.LinkedHashMap;
+// - Brianna
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -126,6 +142,8 @@ public class EntryEditor extends BorderPane {
 
     private final List<EntryEditorTab> allPossibleTabs;
 
+    private final List<FieldEditorFX> allFieldEditors = new ArrayList<>(); // Change - Brianna
+
     public EntryEditor(LibraryTab libraryTab, UndoAction undoAction, RedoAction redoAction) {
         this.libraryTab = libraryTab;
         this.databaseContext = libraryTab.getBibDatabaseContext();
@@ -150,7 +168,9 @@ public class EntryEditor extends BorderPane {
         this.previewPanel.setDatabase(databaseContext);
 
         setupKeyBindings();
-
+        
+        setupFieldJumpShortcut();  // Change - Brianna 
+        
         this.allPossibleTabs = createTabs();
 
         setupDragAndDrop();
@@ -176,6 +196,111 @@ public class EntryEditor extends BorderPane {
                     }
                 });
     }
+
+    // Change - Brianna
+    private void setupFieldJumpShortcut() {
+        this.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            Optional<KeyCombination> optionalCombination = keyBindingRepository.getKeyCombination(KeyBinding.FOCUS_FIELD_BY_NAME);
+            if (optionalCombination.isPresent() && optionalCombination.get().match(event)) {
+                showFieldJumpPopup();
+                event.consume();
+            }
+        });
+    }
+
+    private void showFieldJumpPopup() {
+        List<FieldEditorFX> editors = getCurrentFieldEditors();
+        Map<String, FieldEditorFX> nameToEditor = new LinkedHashMap<>();
+        int counter = 1;
+        for (FieldEditorFX editor : editors) {
+            String labelGuess = editor.getNode().getAccessibleText(); 
+            if (labelGuess == null || labelGuess.isBlank()) {
+                labelGuess = "Field " + counter + " (" + editor.getNode().getClass().getSimpleName() + ")";
+            }
+            nameToEditor.put(labelGuess, editor);
+            counter++;
+        }
+
+        List<String> fieldNames = new ArrayList<>(nameToEditor.keySet());
+
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+
+        TextField inputField = new TextField();
+        inputField.setPromptText("Type to search field name...");
+
+        ListView<String> listView = new ListView<>(FXCollections.observableArrayList(fieldNames));
+        listView.setMaxHeight(150);
+        listView.setPrefWidth(300);
+
+        VBox container = new VBox(5, inputField, listView);
+        container.setPadding(new Insets(10));
+        container.setStyle("-fx-background-color: white; -fx-border-color: gray;");
+
+        popup.getContent().add(container);
+
+        inputField.textProperty().addListener((obs, oldVal, newVal) -> {
+            listView.setItems(fieldNames.stream()
+                    .filter(name -> name.toLowerCase().contains(newVal.toLowerCase()))
+                    .collect(Collectors.toCollection(FXCollections::observableArrayList)));
+        });
+
+        inputField.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.DOWN) {
+                listView.requestFocus();
+                listView.getSelectionModel().selectFirst();
+            } else if (event.getCode() == KeyCode.ESCAPE) {
+                popup.hide();
+            }
+        });
+
+        listView.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                String selected = listView.getSelectionModel().getSelectedItem();
+                FieldEditorFX editor = nameToEditor.get(selected);
+                if (editor != null) {
+                    focusEditor(editor);
+                }
+                popup.hide();
+            } else if (event.getCode() == KeyCode.ESCAPE) {
+                popup.hide();
+            }
+        });
+
+        listView.setOnMouseClicked(event -> {
+            String selected = listView.getSelectionModel().getSelectedItem();
+            FieldEditorFX editor = nameToEditor.get(selected);
+            if (editor != null) {
+                focusEditor(editor);
+            }
+            popup.hide();
+        });
+
+        Bounds bounds = this.localToScreen(this.getBoundsInLocal());
+        popup.show(this, bounds.getMinX() + bounds.getWidth() / 2 - 150, bounds.getMinY() + 100);
+        inputField.requestFocus();
+    }
+
+    private void focusEditor(FieldEditorFX editor) {
+        Node node = editor.getNode();
+        if (!node.isFocusTraversable() && node instanceof Parent parent) {
+            parent.getChildrenUnmodifiable().stream()
+                    .filter(Node::isFocusTraversable)
+                    .findFirst()
+                    .ifPresent(Node::requestFocus);
+        } else {
+            node.requestFocus();
+        }
+    }
+
+    private List<FieldEditorFX> getCurrentFieldEditors() {
+        Tab currentTab = tabbed.getSelectionModel().getSelectedItem();
+        if (currentTab instanceof FieldsEditorTab fieldsTab) {
+            return fieldsTab.getFieldEditors();
+        }
+        return List.of();
+    }
+    // - Brianna
 
     private void setupDragAndDrop() {
         this.setOnDragOver(event -> {
