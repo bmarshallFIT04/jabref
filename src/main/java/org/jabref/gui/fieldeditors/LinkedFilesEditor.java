@@ -118,7 +118,17 @@ public class LinkedFilesEditor extends HBox implements FieldEditorFX {
                 undoManager);
 
         new ViewModelListCellFactory<LinkedFileViewModel>()
-                .withStringTooltip(LinkedFileViewModel::getDescriptionAndLink)
+                // Change - Brianna
+                .withTooltip(viewModel -> {
+                    Tooltip tooltip = new Tooltip();
+                    tooltip.textProperty().bind(Bindings.createStringBinding(
+                            viewModel::getDescriptionAndLink,
+                            viewModel.linkProperty(),
+                            viewModel.descriptionProperty()
+                    ));
+                    return tooltip;
+                })
+                // end - Brianna
                 .withGraphic(this::createFileDisplay)
                 .withContextMenu(this::createContextMenuForFile)
                 .withOnMouseClickedEvent(this::handleItemMouseClick)
