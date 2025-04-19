@@ -35,7 +35,7 @@ public class LinkedFileTooltipTest {
 
     @BeforeEach
     void setUp() throws Exception {
-=        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch = new CountDownLatch(1);
         Platform.startup(latch::countDown);
         latch.await();
 
