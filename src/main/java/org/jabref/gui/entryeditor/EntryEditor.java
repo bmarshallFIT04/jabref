@@ -172,7 +172,11 @@ public class EntryEditor extends BorderPane {
         this.previewPanel.setDatabase(databaseContext);
 
         setupKeyBindings();
-        setupFieldJumpShortcut();  //  Change - Brianna
+        //  Change - Brianna
+        setupFieldJumpShortcut();  
+        private BibEntry currentEntry;
+        private List<FieldEditorFX> testInjectedEditors = null;
+        // end - Brianna
 
         this.allPossibleTabs = createTabs();
 
@@ -319,6 +323,26 @@ public class EntryEditor extends BorderPane {
                 node.requestFocus();
             }
         });
+    }
+    
+    public void jumpToField(String fieldLabel) {
+        List<FieldEditorFX> editors = getCurrentFieldEditors();
+
+        for (FieldEditorFX editor : editors) {
+            String labelGuess = editor.getNode().getAccessibleText();
+            if (labelGuess != null && labelGuess.equalsIgnoreCase(fieldLabel)) {
+                focusFieldEditor(editor);
+                break;
+            }
+        }
+    }
+
+    public void setEntry(BibEntry entry) {
+        this.currentEntry = entry;
+    }
+
+    public void setFieldEditorsForTest(List<FieldEditorFX> editors) {
+        this.testInjectedEditors = editors;
     }
 
     // end - Brianna
