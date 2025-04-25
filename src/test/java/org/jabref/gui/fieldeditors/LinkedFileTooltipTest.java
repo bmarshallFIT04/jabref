@@ -68,6 +68,47 @@ public class LinkedFileTooltipTest {
         assertNotEquals(before, after, "Tooltip should update after file rename.");
     }
 
+    @Test  // Test to PASS
+    void linkedFileDescriptionIsCorrect() {
+        LinkedFile file = new LinkedFile("Appendix", "appendix.pdf", "pdf");
+        assertEquals("Appendix", file.getDescription());
+    }
+
+
+    @Test  // Test to PASS
+    void linkedFilesWithSameDataAreEqual() {
+        LinkedFile file1 = new LinkedFile("desc", "file.pdf", "pdf");
+        LinkedFile file2 = new LinkedFile("desc", "file.pdf", "pdf");
+
+        assertEquals(file1, file2);
+        assertEquals(file1.hashCode(), file2.hashCode());
+    }
+
+    @Test  // Test to FAIL
+    void tooltipChangesWhenOnlyFileTypeChanges() {
+        BibEntry entry = new BibEntry();
+        Path filePath = Paths.get("doc.pdf");
+
+        LinkedFile linkedFile = new LinkedFile("desc", filePath, "pdf");
+        LinkedFileViewModel viewModel = new LinkedFileViewModel(
+                linkedFile,
+                entry,
+                databaseContext,
+                taskExecutor,
+                dialogService,
+                preferences
+        );
+
+        String before = viewModel.getDescriptionAndLink();
+
+        Platform.runLater(() -> linkedFile.setFileType("txt"));  // Change only file type
+        WaitForAsyncUtils.waitForFxEvents();
+
+        String after = viewModel.getDescriptionAndLink();
+
+        // This assumes incorrect behavior — that the tooltip should update on file type change
+        assertNotEquals(before, after, "Tooltip should update when file type changes (this is incorrect)");
+    }
 
     @Test  // Test to FAIL
     void tooltipFailsSameLink() {
