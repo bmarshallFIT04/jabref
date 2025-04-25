@@ -69,8 +69,8 @@ public class LinkedFileTooltipTest {
     }
 
 
-    @Test   // Test to FAIL
-    void tooltipUnchangedIfSameLink() {
+    @Test  // Test to FAIL
+    void tooltipShouldUpdateEvenIfLinkIsSame() {
         BibEntry entry = new BibEntry();
         Path originalPath = Paths.get("file.pdf");
 
@@ -86,10 +86,13 @@ public class LinkedFileTooltipTest {
 
         String before = viewModel.getDescriptionAndLink();
 
+        // Simulate redundant set
         Platform.runLater(() -> linkedFile.setLink(originalPath.toString()));
         WaitForAsyncUtils.waitForFxEvents();
 
         String after = viewModel.getDescriptionAndLink();
-        assertEquals(before, after, "Tooltip should remain unchanged if file path does not change.");
+
+        // Assumes bad behavior — will pass if tooltip incorrectly changes
+        assertNotEquals(before, after, "Tooltip should update even if path hasn’t changed (this is wrong)");
     }
 }
