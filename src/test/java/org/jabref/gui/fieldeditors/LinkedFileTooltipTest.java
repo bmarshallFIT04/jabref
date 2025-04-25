@@ -69,14 +69,14 @@ public class LinkedFileTooltipTest {
     }
 
     @Test  // Test to PASS
-    void linkedFileDescriptionIsCorrect() {
+    void descriptionIsCorrect() {
         LinkedFile file = new LinkedFile("Appendix", "appendix.pdf", "pdf");
         assertEquals("Appendix", file.getDescription());
     }
 
 
     @Test  // Test to PASS
-    void linkedFilesWithSameDataAreEqual() {
+    void linkedFilesAreEqual() {
         LinkedFile file1 = new LinkedFile("desc", "file.pdf", "pdf");
         LinkedFile file2 = new LinkedFile("desc", "file.pdf", "pdf");
 
@@ -85,7 +85,7 @@ public class LinkedFileTooltipTest {
     }
 
     @Test  // Test to FAIL
-    void tooltipChangesWhenOnlyFileTypeChanges() {
+    void tooltipChangesOnTypeChange() {
         BibEntry entry = new BibEntry();
         Path filePath = Paths.get("doc.pdf");
 
