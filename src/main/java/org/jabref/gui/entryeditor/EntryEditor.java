@@ -146,7 +146,11 @@ public class EntryEditor extends BorderPane {
     @Inject private AiService aiService;
 
     private final List<EntryEditorTab> allPossibleTabs;
-    private final List<FieldEditorFX> allFieldEditors = new ArrayList<>();  // Change - Brianna
+    // Change - Brianna
+    private final List<FieldEditorFX> allFieldEditors = new ArrayList<>();  
+    private BibEntry currentEntry;
+    private List<FieldEditorFX> testInjectedEditors = null;
+    // end - Brianna
 
     public EntryEditor(LibraryTab libraryTab, UndoAction undoAction, RedoAction redoAction) {
         this.libraryTab = libraryTab;
@@ -172,11 +176,7 @@ public class EntryEditor extends BorderPane {
         this.previewPanel.setDatabase(databaseContext);
 
         setupKeyBindings();
-        //  Change - Brianna
-        setupFieldJumpShortcut();  
-        private BibEntry currentEntry;
-        private List<FieldEditorFX> testInjectedEditors = null;
-        // end - Brianna
+        setupFieldJumpShortcut();  // Change - Brianna
 
         this.allPossibleTabs = createTabs();
 
