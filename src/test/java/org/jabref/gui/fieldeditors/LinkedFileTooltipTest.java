@@ -70,7 +70,7 @@ public class LinkedFileTooltipTest {
 
 
     @Test  // Test to FAIL
-    void tooltipShouldUpdateEvenIfLinkIsSame() {
+    void tooltipFailsSameLink() {
         BibEntry entry = new BibEntry();
         Path originalPath = Paths.get("file.pdf");
 
