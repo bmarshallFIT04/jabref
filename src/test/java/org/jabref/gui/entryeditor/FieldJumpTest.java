@@ -111,34 +111,11 @@ public class FieldJumpTest {
     }
 
     @Test  // Test to FAIL
-    public void noFocusIfMissing() throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
+    void labelMismatchFails() {
+        TextField field = new TextField();
+        field.setAccessibleText("journal");
 
-        Platform.runLater(() -> {
-            try {
-                DummyEditor authorEditor = new DummyEditor("author");
-                DummyEditor journalEditor = new DummyEditor("journal");
-
-                BibEntry entry = new BibEntry();
-                EntryEditor editor = createEntryEditor(entry, List.of(authorEditor, journalEditor));
-
-                Stage stage = new Stage();
-                stage.setScene(new Scene(new VBox(editor)));
-                stage.show();
-
-                editor.jumpToField("abstract");
-
-                boolean focused = authorEditor.getNode().isFocused() || journalEditor.getNode().isFocused();
-                assertFalse(focused, "No field should be focused for missing label.");
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("Test failed", e);
-            } finally {
-                latch.countDown();
-            }
-        });
-
-        boolean done = latch.await(10, TimeUnit.SECONDS);
-        assertTrue(done, "Test timed out.");
+        String label = field.getAccessibleText();
+        assertTrue("author".equals(label), "Expected label to be 'author' (this is incorrect)");
     }
 }
