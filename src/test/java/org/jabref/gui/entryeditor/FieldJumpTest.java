@@ -4,110 +4,141 @@ import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import javafx.scene.layout.VBox;
-
+import javafx.stage.Stage;
+import org.jabref.gui.LibraryTab;
+import org.jabref.model.entry.BibEntry;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.lang.reflect.*;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class FieldJumpTest {
 
-    private interface FieldEditorStub {
-        Node getNode();
-    }
-
     @BeforeAll
-    public static void initToolkit() throws Exception {
+    public static void setupJavaFX() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         Platform.startup(latch::countDown);
         latch.await();
     }
 
-    private static class DummyFieldEditor implements FieldEditorStub {
+    public static class DummyEditor {
         private final TextField field;
 
-        public DummyFieldEditor(String label) {
+        public DummyEditor(String label) {
             this.field = new TextField();
             this.field.setAccessibleText(label);
         }
 
-        @Override
         public Node getNode() {
             return field;
         }
-
-        public TextField getField() {
-            return field;
-        }
     }
 
-    @Test   // Test to PASS
-    public void jumpToAuthor() throws Exception {
-        DummyFieldEditor authorEditor = new DummyFieldEditor("author");
-        DummyFieldEditor journalEditor = new DummyFieldEditor("journal");
-
-        Map<String, DummyFieldEditor> nameToEditor = new LinkedHashMap<>();
-        nameToEditor.put("author", authorEditor);
-        nameToEditor.put("journal", journalEditor);
-
-        CountDownLatch latch = new CountDownLatch(1);
-
-        Platform.runLater(() -> {
-            VBox root = new VBox(authorEditor.getNode(), journalEditor.getNode());
-            Stage stage = new Stage();
-            stage.setScene(new Scene(root));
-            stage.show();
-
-            // Simulate jump
-            Node node = nameToEditor.get("author").getNode();
-            node.requestFocus();
-
-            assertTrue(node.isFocused(), "Editor should be focused");
-            latch.countDown();
-        });
-
-        latch.await();
-    }
-
-    @Test   // Test to FAIL
-    public void jumpToMissingField() throws Exception {
-        DummyFieldEditor authorEditor = new DummyFieldEditor("author");
-        DummyFieldEditor journalEditor = new DummyFieldEditor("journal");
-
-        Map<String, DummyFieldEditor> nameToEditor = new LinkedHashMap<>();
-        nameToEditor.put("author", authorEditor);
-        nameToEditor.put("journal", journalEditor);
-
-        CountDownLatch latch = new CountDownLatch(1);
-
-        Platform.runLater(() -> {
-            VBox root = new VBox(authorEditor.getNode(), journalEditor.getNode());
-            Stage stage = new Stage();
-            stage.setScene(new Scene(root));
-            stage.show();
-
-            // Simulate jump to a nonexistent field
-            DummyFieldEditor missingEditor = nameToEditor.get("abstract");
-
-            // This should be null, meaning no jump possible
-            if (missingEditor != null) {
-                Node node = missingEditor.getNode();
-                node.requestFocus();
+    private EntryEditor createEntryEditor(BibEntry entry, List<DummyEditor> dummyEditors) throws Exception {
+        Constructor<?> constructor = null;
+        for (Constructor<?> c : EntryEditor.class.getDeclaredConstructors()) {
+            if (c.getParameterCount() == 3) {
+                constructor = c;
+                break;
             }
+        }
 
-            // Ensure no node got focused accidentally
-            boolean anyFocused = authorEditor.getField().isFocused() || journalEditor.getField().isFocused();
-            assertTrue(!anyFocused, "No editor should be focused if field doesn't exist");
+        if (constructor == null) {
+            throw new IllegalStateException("EntryEditor constructor not found");
+        }
 
-            latch.countDown();
+        constructor.setAccessible(true);
+        EntryEditor editor = (EntryEditor) constructor.newInstance(mock(LibraryTab.class), new Object(), new Object());
+        editor.setEntry(entry);
+
+        Class<?> fieldEditorFXClass = Class.forName("org.jabref.gui.entryeditor.FieldEditorFX");
+        List<Object> fieldEditorProxies = dummyEditors.stream()
+                .map(de -> Proxy.newProxyInstance(
+                        fieldEditorFXClass.getClassLoader(),
+                        new Class<?>[]{fieldEditorFXClass},
+                        (proxy, method, args) -> {
+                            if ("getNode".equals(method.getName())) {
+                                return de.getNode();
+                            }
+                            return null;
+                        }
+                ))
+                .toList();
+
+        Method setter = EntryEditor.class.getMethod("setFieldEditorsForTest", List.class);
+        setter.invoke(editor, fieldEditorProxies);
+
+        return editor;
+    }
+
+    @Test  // Test to PASS
+    public void focusAuthor() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Platform.runLater(() -> {
+            try {
+                DummyEditor authorEditor = new DummyEditor("author");
+                DummyEditor journalEditor = new DummyEditor("journal");
+
+                BibEntry entry = new BibEntry();
+                EntryEditor editor = createEntryEditor(entry, List.of(authorEditor, journalEditor));
+
+                Stage stage = new Stage();
+                stage.setScene(new Scene(new VBox(editor)));
+                stage.show();
+
+                editor.jumpToField("author");
+
+                assertTrue(authorEditor.getNode().isFocused(), "Author field should be focused.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Test failed", e);
+            } finally {
+                latch.countDown();
+            }
         });
 
-        latch.await();
+        boolean done = latch.await(10, TimeUnit.SECONDS);
+        assertTrue(done, "Test timed out.");
+    }
+
+    @Test  // Test to FAIL
+    public void noFocusIfMissing() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Platform.runLater(() -> {
+            try {
+                DummyEditor authorEditor = new DummyEditor("author");
+                DummyEditor journalEditor = new DummyEditor("journal");
+
+                BibEntry entry = new BibEntry();
+                EntryEditor editor = createEntryEditor(entry, List.of(authorEditor, journalEditor));
+
+                Stage stage = new Stage();
+                stage.setScene(new Scene(new VBox(editor)));
+                stage.show();
+
+                editor.jumpToField("abstract");
+
+                boolean focused = authorEditor.getNode().isFocused() || journalEditor.getNode().isFocused();
+                assertFalse(focused, "No field should be focused for missing label.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Test failed", e);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        boolean done = latch.await(10, TimeUnit.SECONDS);
+        assertTrue(done, "Test timed out.");
     }
 }
