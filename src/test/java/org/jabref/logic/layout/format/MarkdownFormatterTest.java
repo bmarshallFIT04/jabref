@@ -8,8 +8,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 class MarkdownFormatterTest {
 
@@ -24,6 +24,34 @@ class MarkdownFormatterTest {
     void formatWhenFormattingNullThenThrowsException() {
         Exception exception = assertThrows(NullPointerException.class, () -> markdownFormatter.format(null));
         assertEquals("Field Text should not be null, when handed to formatter", exception.getMessage());
+    }
+
+    @Test  // Test to PASS
+    public void testInputBold() {
+        String userInput = "**this is bold** text from user";
+        assertTrue(MarkdownFormatter.hasProperBold(userInput),
+                "User input should contain properly formatted bold (**text**).");
+    }
+
+    @Test  // Test to PASS
+    public void testInputItalic() {
+        String userInput = "This is _italic_ text from user";
+        assertTrue(MarkdownFormatter.hasProperItalic(userInput),
+                "User input should contain properly formatted italic (_text_).");
+    }
+
+    @Test  // Test to PASS
+    public void testInputStrikethrough() {
+        String userInput = "Here is ~~struck through~~ text from user";
+        assertTrue(MarkdownFormatter.hasProperStrikethrough(userInput),
+                "User input should contain properly formatted strikethrough (~~text~~).");
+    }
+
+    @Test  // Test to FAIL
+    public void testInvalidBold() {
+        String userInput = "**bold text without closing stars";
+        assertTrue(MarkdownFormatter.hasProperBold(userInput),
+                "Incorrect bold formatting should fail the bold check.");
     }
 
     private static Stream<Arguments> provideMarkdownAndHtml() {
