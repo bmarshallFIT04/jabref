@@ -30,4 +30,26 @@ public class MarkdownFormatter implements LayoutFormatter {
         // workaround HTMLChars transforming "\n" into <br> by returning a one liner
         return html.replaceAll("\\r\\n|\\r|\\n", " ").trim();
     }
+
+    // Helper methods for unit tests
+    public static boolean hasProperBold(String text) {
+        if (text == null) {
+            return false;
+        }
+        return text.matches(".*\\*\\*[^*]+\\*\\*.*");
+    }
+
+    public static boolean hasProperItalic(String text) {
+        if (text == null) {
+            return false;
+        }
+        return text.matches(".*_[^_]+_.*");
+    }
+
+    public static boolean hasProperStrikethrough(String text) {
+        if (text == null) {
+            return false;
+        }
+        return text.matches(".*~~[^~]+~~.*");
+    }
 }
