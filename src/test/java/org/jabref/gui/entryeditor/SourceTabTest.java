@@ -103,4 +103,34 @@ class SourceTabTest {
         // No exception should be thrown
         robot.interrupt(100);
     }
+    /* //chris change
+    @Test //Pass
+void refreshEntryUpdatesUI() {
+    // Setup mock sourceTab and currentlyEditedEntry
+    EntryEditor entryEditor = createEntryEditorWithMockedSourceTab();
+    entryEditor.refreshEntry();
+
+    // Assert that parseBibtex was called and entry was updated (e.g., re-bound)
+    verify(entryEditor.getSourceTab()).parseBibtex();
+    verifyUIUpdate(entryEditor);
 }
+
+
+
+@Test //Fail
+public void refreshEntry_doesNotUpdateIfSourceInvalid() {
+    // Given
+    BibEntry entry = new BibEntry();
+    SourceTab sourceTab = new SourceTab(...);
+    sourceTab.setText("@article{"); // Malformed BibTeX
+
+    // When
+    entryEditor.setCurrentlyEditedEntry(entry);
+    entryEditor.refreshEntry(); // Should  fail
+
+    // Then
+    assertFalse(entry.getField(StandardField.TITLE).isPresent()); // No invalid title applied
+}
+} */
+}
+
