@@ -188,7 +188,77 @@ public class EntryEditor extends BorderPane {
                 activeTab.notifyAboutFocus(currentlyEditedEntry);
             }
         });
+  // change - Chris
+    
+  // Pastes clipboard content into the 'note' field of the currently edited entry
+private void pasteEntry() {
+    String clipboardText = getClipboardContent();
 
+    if (clipboardText != null && !clipboardText.isEmpty()) {
+        if (currentlyEditedEntry != null) {
+            currentlyEditedEntry.setField(StandardField.NOTE, clipboardText, null); // Set 'note' field
+            updateEntry(); // Refresh UI
+            System.out.println("Pasted clipboard content into the 'note' field.");
+        } else {
+            System.out.println("No entry is currently being edited.");
+        }
+    } else {
+        System.out.println("Clipboard is empty or content is not text.");
+    }
+}
+
+// Gets text content from the system clipboard
+private String getClipboardContent() {
+    try {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        java.awt.datatransfer.Clipboard clipboard = toolkit.getSystemClipboard();
+        Transferable content = clipboard.getContents(null);
+
+        if (content != null && content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            return (String) content.getTransferData(DataFlavor.stringFlavor);
+        }
+    } catch (UnsupportedFlavorException | IOException e) {
+        e.printStackTrace();
+    }
+
+    return null;
+}
+
+// Replaces content of the 'note' field with pasted content and refreshes the UI
+private void updateEntryWithPastedContent(String content) {
+    if (currentlyEditedEntry != null) {
+        Field field = StandardField.NOTE;
+        currentlyEditedEntry.clearField(field); // Clear old content
+        currentlyEditedEntry.setField("note", content); // Set new content
+        updateEntry(); // Refresh UI
+        System.out.println("Updated 'note' field with pasted clipboard content.");
+    }
+}
+
+// Refreshes all tabs to reflect the current entry content
+private void updateEntry() {
+    if (tabbed != null) {
+        tabbed.getTabs().forEach(tab -> {
+            if (tab instanceof EntryEditorTab entryTab) {
+                entryTab.bindToEntry(currentlyEditedEntry);
+            }
+        });
+
+        this.requestLayout(); // Redraw UI if needed
+    }
+}
+
+// Re-parses source tab and updates the entry view
+private void refreshEntry() {
+    if (sourceTab != null) {
+        sourceTab.parseBibtex();
+    }
+
+    updateEntry(); // Update UI
+    System.out.println("Entry refreshed!");
+}
+}
+//end change - Chris
         EasyBind.listen(preferences.getPreviewPreferences().showPreviewAsExtraTabProperty(),
                 (obs, oldValue, newValue) -> {
                     if (currentlyEditedEntry != null) {
