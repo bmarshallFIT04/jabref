@@ -1,0 +1,14 @@
+2 - Shortcut Ctrl+R Does Not Work
+Fix: Implemented key binding for Ctrl+R that triggers refreshEntry() in EntryEditor.java
+Overview: The refresh allows users to update a BibTeX entry by reparsing its source text.
+Problem: Users could not use Ctrl+R to rename the sources.
+Solution: The shortcut Ctrl+R was implemented to edit the source tab.
+Test: 	refreshEntry()				 Yes	
+	updateEntry()				 Yes	
+	pasteEntry()				 Yes	
+	getClipboardContent()	 		 Yes	
+	updateEntryWithPastedContent()	 Yes	
+	currentlyEditedEntry.setField()	 	 Yes	
+	sourceTab.parseBibtex()	 		 Yes
+
+

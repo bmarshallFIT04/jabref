@@ -1,0 +1,13 @@
+4- Overeritten Bibtatex Code When Using CTRL+V
+Fix: Ctrl+V now pastes clipboard content into the current edited entry without overwriting.
+Overview: JabRef would overwrite the code whenever Ctrl+V was used, and now the shortcut works with the field “note” to prevent that.
+Problem: The shortcut Ctrl+V would overwrite citation keys.
+Solution: Used the pasteEntry to fetch from the clipboard and insert it into the “note” field, which would end up not overwriting the citation key.
+Test: Test to Pass
+clipboardContentIsPasted works to have the clipboard text inserted into the note field of entry and shows in the UI.
+clipboardContentRetrieved would verify getClipboardContent correctly and get a string from the system.
+Test to Fail
+clipboardPasteFailsOnNullEntry simulates the shortcut being pressed with no entry, and nothing gets pasted
+clipboardPasteFailsOnEmptyClipboard makes sure no field update happens when clipboard is empty.
+
+Notes:The  Clipboard has to contain text in order to work.
