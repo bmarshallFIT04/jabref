@@ -654,8 +654,8 @@ public class BibEntry implements Cloneable {
      * @param field The field to set.
      * @param value The value to set.
      */
-    public Optional<FieldChange> setField(Field field, String value) {
-        return setField(field, value, EntriesEventSource.LOCAL);
+    public Optional<FieldChange> setField(String field, String value) {
+        return setField(string, value, EntriesEventSource.LOCAL);
     }
 
     /**

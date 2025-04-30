@@ -2,6 +2,8 @@ package org.jabref.gui.keyboard;
 
 import org.jabref.logic.l10n.Localization;
 
+import javafx.scene.input.KeyCodeCombination;
+
 /**
  * @implNote Cannot be sorted alphabetically, as {@link KeyBindingRepository#getKeyCombination(KeyBinding)} iterates over the enum in order and returns the first match.
  */
@@ -37,8 +39,8 @@ public enum KeyBinding {
     COPY("Copy", Localization.lang("Copy"), "ctrl+C", KeyBindingCategory.EDIT),
     COPY_TITLE("Copy title", Localization.lang("Copy title"), "ctrl+shift+alt+T", KeyBindingCategory.EDIT),
 
-    // We migrated from "Copy \\cite{citation key}" to "Copy citation key with configured cite command", therefore we keep the "old string" for backwards comppatibility
-    COPY_CITE_CITATION_KEY("Copy \\cite{citation key}", Localization.lang("Copy citation key with configured cite command"), "ctrl+K", KeyBindingCategory.EDIT),
+    // We migrated from "Copy \cite{citation key}" to "Copy citation key with configured cite command", therefore we keep the "old string" for backwards comppatibility
+    COPY_CITE_CITATION_KEY("Copy \cite{citation key}", Localization.lang("Copy citation key with configured cite command"), "ctrl+K", KeyBindingCategory.EDIT),
 
     COPY_CITATION_KEY("Copy citation key", Localization.lang("Copy citation key"), "ctrl+shift+K", KeyBindingCategory.EDIT),
     COPY_CITATION_KEY_AND_TITLE("Copy citation key and title", Localization.lang("Copy citation key and title"), "ctrl+shift+alt+K", KeyBindingCategory.EDIT),
@@ -90,7 +92,7 @@ public enum KeyBinding {
     OPEN_OPEN_OFFICE_LIBRE_OFFICE_CONNECTION("Open OpenOffice/LibreOffice connection", Localization.lang("Open OpenOffice/LibreOffice connection"), "alt+0", KeyBindingCategory.TOOLS),
     SHOW_PREFS("Preferences", Localization.lang("Preferences"), "ctrl+,", KeyBindingCategory.FILE),
     OPEN_URL_OR_DOI("Open URL or DOI", Localization.lang("Open URL or DOI"), "F3", KeyBindingCategory.TOOLS),
-    PASTE("Paste", Localization.lang("Paste"), "ctrl+V", KeyBindingCategory.EDIT),
+    /* changes made - Chris */PASTE("Paste", Localization.lang("Paste"), "ctrl+V", KeyBindingCategory.EDIT),
     PULL_CHANGES_FROM_SHARED_DATABASE("Pull changes from shared database", Localization.lang("Pull changes from shared database"), "ctrl+shift+R", KeyBindingCategory.FILE),
     PREVIOUS_PREVIEW_LAYOUT("Previous preview layout", Localization.lang("Previous preview layout"), "shift+F9", KeyBindingCategory.VIEW),
     PREVIOUS_LIBRARY("Previous library", Localization.lang("Previous library"), "ctrl+PAGE_UP", KeyBindingCategory.VIEW),
@@ -100,7 +102,7 @@ public enum KeyBinding {
     QUIT_JABREF("Quit JabRef", Localization.lang("Quit JabRef"), "ctrl+Q", KeyBindingCategory.FILE),
     REDO("Redo", Localization.lang("Redo"), "ctrl+Y", KeyBindingCategory.EDIT),
     REFRESH_OO("Refresh OO", Localization.lang("Refresh OpenOffice/LibreOffice"), "ctrl+alt+O", KeyBindingCategory.TOOLS),
-    REPLACE_STRING("Replace string", Localization.lang("Replace string"), "ctrl+R", KeyBindingCategory.SEARCH),
+    /*chnaged made - Chris */REPLACE_STRING("Replace string", Localization.lang("Replace string"), "ctrl+R", KeyBindingCategory.SEARCH),
     RESOLVE_DUPLICATE_CITATION_KEYS("Resolve duplicate citation keys", Localization.lang("Resolve duplicate citation keys"), "ctrl+shift+D", KeyBindingCategory.BIBTEX),
     SAVE_ALL("Save all", Localization.lang("Save all"), "ctrl+alt+S", KeyBindingCategory.FILE),
     SAVE_DATABASE("Save library", Localization.lang("Save library"), "ctrl+S", KeyBindingCategory.FILE),
@@ -124,7 +126,7 @@ public enum KeyBinding {
     SKIMMED("Set read status to skimmed", Localization.lang("Set read status to skimmed"), "", KeyBindingCategory.EDIT),
     GROUP_SUBGROUP_RENAME("Rename group", Localization.lang("Rename group"), "F2", KeyBindingCategory.EDIT),
     MERGE_WITH_FETCHED_ENTRY("Get bibliographic data from %0, \"DOI/ISBN/...\"", Localization.lang("Get bibliographic data from %0", "DOI/ISBN/..."), "F5", KeyBindingCategory.EDIT),
-    LOOKUP_DOC_IDENTIFIER("Search document identifier online", Localization.lang("Search document identifier online"), "alt+F", KeyBindingCategory.EDIT);
+    LOOKUP_DOC_IDENTIFIER("Search document identifier online", Localization.lang("Search document identifier online"), "alt+F", KeyBindingCategory.EDIT), REFRESH_ENTRY, PASTE_ENTRY;
 
     private final String constant;
     private final String localization;
@@ -160,5 +162,10 @@ public enum KeyBinding {
 
     public KeyBindingCategory getCategory() {
         return category;
+    }
+
+    public KeyCodeCombination getKeyCombination() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getKeyCombination'");
     }
 }

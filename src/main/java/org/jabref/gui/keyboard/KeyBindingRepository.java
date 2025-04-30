@@ -19,6 +19,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 
 import org.jabref.logic.os.OS;
+import org.jabref.model.FieldChange; //chris change
 
 /**
  * Handles keyboard shortcuts. Including checking whether a keybinding matches.
@@ -102,7 +103,7 @@ public class KeyBindingRepository {
         getKeyBinding(key).ifPresent(binding -> put(binding, value));
     }
 
-    private Optional<KeyBinding> getKeyBinding(String key) {
+    public Optional<KeyBinding> getKeyBinding(String key) {
         return Arrays.stream(KeyBinding.values()).filter(b -> b.getConstant().equals(key)).findFirst();
     }
 
@@ -204,5 +205,10 @@ public class KeyBindingRepository {
     @Override
     public int hashCode() {
         return bindings.hashCode();
+    }
+
+    //chris change
+    public Optional<FieldChange> getKeyBinding(KeyBinding refreshEntry) {
+        throw new UnsupportedOperationException("Unimplemented method 'getKeyBinding'");
     }
 }

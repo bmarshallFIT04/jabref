@@ -1,6 +1,7 @@
 package org.jabref.gui.entryeditor;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,7 +14,13 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Side;
 import javafx.scene.control.Button;
@@ -22,14 +29,21 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.InputEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 
+import org.fxmisc.wellbehaved.event.InputMap;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.LibraryTab;
 import org.jabref.gui.StateManager;
+import org.jabref.gui.autocompleter.SuggestionProviders;
 import org.jabref.gui.citationkeypattern.GenerateCitationKeySingleAction;
 import org.jabref.gui.cleanup.CleanupSingleAction;
 import org.jabref.gui.entryeditor.citationrelationtab.CitationRelationsTab;
@@ -64,6 +78,7 @@ import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.BibEntryTypesManager;
 import org.jabref.model.entry.EntryConverter;
 import org.jabref.model.entry.field.Field;
+import org.jabref.model.entry.field.StandardField;
 import org.jabref.model.util.DirectoryMonitorManager;
 import org.jabref.model.util.FileUpdateMonitor;
 
@@ -74,6 +89,12 @@ import jakarta.inject.Inject;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+
+
 
 /**
  * GUI component that allows editing of the fields of a BibEntry (i.e. the one that shows up, when you double click on
@@ -126,6 +147,10 @@ public class EntryEditor extends BorderPane {
 
     private final List<EntryEditorTab> allPossibleTabs;
 
+    private String tabName;
+    private EntryEditor entryEditor;
+    private List<Field> fields;
+
     public EntryEditor(LibraryTab libraryTab, UndoAction undoAction, RedoAction redoAction) {
         this.libraryTab = libraryTab;
         this.databaseContext = libraryTab.getBibDatabaseContext();
@@ -161,10 +186,79 @@ public class EntryEditor extends BorderPane {
                 activeTab.notifyAboutFocus(currentlyEditedEntry);
             }
         });
+  // change - Chris
+    
+  // Pastes clipboard content into the 'note' field of the currently edited entry
+private void pasteEntry() {
+    String clipboardText = getClipboardContent();
 
-        EasyBind.listen(preferences.getPreviewPreferences().showPreviewAsExtraTabProperty(),
+    if (clipboardText != null && !clipboardText.isEmpty()) {
+        if (currentlyEditedEntry != null) {
+            currentlyEditedEntry.setField(StandardField.NOTE, clipboardText, null); // Set 'note' field
+            updateEntry(); // Refresh UI
+            System.out.println("Pasted clipboard content into the 'note' field.");
+        } else {
+            System.out.println("No entry is currently being edited.");
+        }
+    } else {
+        System.out.println("Clipboard is empty or content is not text.");
+    }
+}
+
+// Gets text content from the system clipboard
+private String getClipboardContent() {
+    try {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        java.awt.datatransfer.Clipboard clipboard = toolkit.getSystemClipboard();
+        Transferable content = clipboard.getContents(null);
+
+        if (content != null && content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            return (String) content.getTransferData(DataFlavor.stringFlavor);
+        }
+    } catch (UnsupportedFlavorException | IOException e) {
+        e.printStackTrace();
+    }
+
+    return null;
+}
+
+// Replaces content of the 'note' field with pasted content and refreshes the UI
+private void updateEntryWithPastedContent(String content) {
+    if (currentlyEditedEntry != null) {
+        Field field = StandardField.NOTE;
+        currentlyEditedEntry.clearField(field); // Clear old content
+        currentlyEditedEntry.setField("note", content); // Set new content
+        updateEntry(); // Refresh UI
+        System.out.println("Updated 'note' field with pasted clipboard content.");
+    }
+}
+
+// Refreshes all tabs to reflect the current entry content
+private void updateEntry() {
+    if (tabbed != null) {
+        tabbed.getTabs().forEach(tab -> {
+            if (tab instanceof EntryEditorTab entryTab) {
+                entryTab.bindToEntry(currentlyEditedEntry);
+            }
+        });
+
+        this.requestLayout(); // Redraw UI if needed
+    }
+}
+
+// Re-parses source tab and updates the entry view
+private void refreshEntry() {
+    if (sourceTab != null) {
+        sourceTab.parseBibtex();
+    }
+
+    updateEntry(); // Update UI
+    System.out.println("Entry refreshed!");
+}
+}
+//end change - Chris
                 (obs, oldValue, newValue) -> {
-                    if (currentlyEditedEntry != null) {
+                        if (currentlyEditedEntry != null) 
                         adaptVisibleTabs();
                         Tab tab = tabbed.getSelectionModel().selectedItemProperty().get();
                         if (newValue && tab instanceof FieldsEditorTab fieldsEditorTab) {
@@ -207,6 +301,26 @@ public class EntryEditor extends BorderPane {
      * Set up key bindings specific for the entry editor.
      */
     private void setupKeyBindings() {
+        //change - Chris
+        KeyCodeCombination refreshCombination = keyBindingRepository.getKeyBinding(KeyBinding.REFRESH_ENTRY)
+        .map(binding -> (KeyCodeCombination) binding.getKeyCombination())
+        .orElse(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN));
+
+// Define key binding for Ctrl+V (Paste)
+KeyCodeCombination pasteCombination = keyBindingRepository.getKeyBinding(KeyBinding.PASTE_ENTRY)
+        .map(binding -> (KeyCodeCombination) binding.getKeyCombination())
+        .orElse(new KeyCodeCombination(KeyCode.V, KeyCombination.CONTROL_DOWN));
+
+        this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+
+    if (refreshCombination.match(event)) {
+        refreshEntry();  // For Ctrl+R
+        event.consume();
+    } else if (pasteCombination.match(event)) {
+        pasteEntry();  // For Ctrl+V
+        event.consume();
+    }
+}); //change end - Chris
         this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             Optional<KeyBinding> keyBinding = keyBindingRepository.mapToKeyBinding(event);
             if (keyBinding.isPresent()) {
@@ -242,10 +356,15 @@ public class EntryEditor extends BorderPane {
                         close();
                         event.consume();
                         break;
+                    case REFRESH_ENTRY: //change - Chris
+                        refreshEntry();
+                        event.consume();
+                        //change end - Chris
                     default:
                         // Pass other keys to parent
                 }
-            }
+
+            };
         });
     }
 
@@ -495,4 +614,139 @@ public class EntryEditor extends BorderPane {
     public void previousPreviewStyle() {
         this.previewPanel.previousPreviewStyle();
     }
+
+
+
+/* public class EntryEditor extends VBox {
+
+    private final KeyBindingRepository keyBindingRepository;
+    private final DialogService dialogService;
+    private final TabPane tabbed;
+    private final SourceTab sourceTab; // Make sure this is initialized properly
+
+    public EntryEditor(BibDatabaseContext databaseContext, StateManager stateManager,
+                       SuggestionProviders suggestionProviders, DialogService dialogService,
+                       UndoManager undoManager, KeyBindingRepository keyBindingRepository) {
+        this.keyBindingRepository = keyBindingRepository;
+        this.dialogService = dialogService;
+        this.tabbed = new TabPane(); // Adjust if tabbed is initialized elsewhere
+
+        // setupKeyBindings(); // <-- You already call this in your existing implementation
+    }
+
+    private void refreshEntry() {
+        // Re-parse BibTeX if available
+        if (sourceTab != null) {
+            sourceTab.parseBibtex(); // Only works if sourceTab is initialized
+        }
+
+        updateEntry();
+        System.out.println("Entry refreshed!");
+    }
+
+    private void updateEntry() {
+        tabbed.getTabs().forEach(tab -> {
+            if (tab instanceof EntryEditorTab editorTab) {
+                BibEntry entry = getCurrentEntry(); // Replace with your actual method to get the current entry
+                editorTab.bindToEntry(entry);
+            }
+        });
+
+        this.requestLayout();
+    }
+
+    private BibEntry getCurrentEntry() {
+        // TODO: Return the actual BibEntry being edited
+        return new BibEntry();
+    }
+
+    private org.jabref.gui.entryeditor.InputMap getInputMap(int whenInFocusedWindow) {
+        throw new UnsupportedOperationException("Unimplemented method 'getInputMap'");
+    }
+}
+
+
+
+
+
+REFRESH_ENTRY("Refresh entry", KeyCodeCombination.valueOf("CTRL+R"));
+
+public EntryEditor(BibDatabaseContext databaseContext, StateManager stateManager, SuggestionProviders suggestionProviders, DialogService dialogService, UndoManager undoManager, KeyBindingRepository keyBindingRepository) {
+    this.keyBindingRepository = keyBindingRepository;
+
+    this.keyBindingRepository = keyBindingRepository;
+    this.dialogService = dialogService;
+    this.tabbed = new TabPane(); // or however it's initialized
+
+    setupKeyBindings();
+
+}
+
+
+private org.jabref.gui.entryeditor.InputMap getInputMap(int whenInFocusedWindow) {
+    
+    throw new UnsupportedOperationException("Unimplemented method 'getInputMap'");
+}
+private void updateEntry() {
+    // Force update the entry editor fields
+    tabbed.getTabs().forEach(tab -> {
+        if (tab instanceof EntryEditorTab) {
+            BibEntry entry;
+            ((EntryEditorTab) tab).bindToEntry(entry);
+        }
+    });
+
+    // Repaint or re-layout if necessary
+    this.requestLayout();
+}
+
+private void refreshEntry() {
+    // Re-parse BibTeX if available
+    if (sourceTab != null) {
+        sourceTab.parseBibtex(); // Only works if sourceTab is initialized
+    }
+
+    // You may want to notify other tabs or refresh the UI
+    updateEntry(); // If you have a method like this
+    System.out.println("Entry refreshed!");
+} */
+/*private void setupKeyBindings() {
+    KeyCodeCombination refreshCombination = keyBindingRepository.getKeyBinding(KeyBinding.REFRESH_ENTRY)
+        .map(binding -> (KeyCodeCombination) binding.getKeyCombination())
+        .orElse(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN));
+
+    this.getNode().addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+        if (refreshCombination.match(event)) {
+            refreshEntry();
+            event.consume();
+        }
+    });
+} */
+
+@Test //Pass
+void refreshEntryUpdatesUI() {
+    // Setup mock sourceTab and currentlyEditedEntry
+    EntryEditor entryEditor = createEntryEditorWithMockedSourceTab();
+    entryEditor.refreshEntry();
+
+    // Assert that parseBibtex was called and entry was updated (e.g., re-bound)
+    verify(entryEditor.getSourceTab()).parseBibtex();
+    verifyUIUpdate(entryEditor);
+}
+
+
+
+@Test //Fail
+public void refreshEntry_doesNotUpdateIfSourceInvalid() {
+    // Given
+    BibEntry entry = new BibEntry();
+    SourceTab sourceTab = new SourceTab(...);
+    sourceTab.setText("@article{"); // Malformed BibTeX
+
+    // When
+    entryEditor.setCurrentlyEditedEntry(entry);
+    entryEditor.refreshEntry(); // Should  fail
+
+    // Then
+    assertFalse(entry.getField(StandardField.TITLE).isPresent()); // No invalid title applied
 }

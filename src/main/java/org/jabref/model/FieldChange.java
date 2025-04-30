@@ -5,6 +5,8 @@ import java.util.Objects;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.field.Field;
 
+import javafx.scene.input.KeyCodeCombination; //chris change
+
 /**
  * This class is used in the instance of a field being modified, removed or added.
  */
@@ -83,5 +85,10 @@ public class FieldChange {
     public String toString() {
         return "FieldChange [entry=" + entry.getCitationKey().orElse("") + ", field=" + field + ", oldValue="
                 + oldValue + ", newValue=" + newValue + "]";
+    }
+
+    //chris change
+    public KeyCodeCombination getKeyCombination() {
+        throw new UnsupportedOperationException("Unimplemented method 'getKeyCombination'");
     }
 }

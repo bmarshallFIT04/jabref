@@ -374,4 +374,8 @@ public class SourceTab extends EntryEditorTab {
             codeArea.requestFocus();
         }
     }
+//chris change
+    public void parseBibtex() {
+        throw new UnsupportedOperationException("Unimplemented method 'parseBibtex'");
+    }
 }
