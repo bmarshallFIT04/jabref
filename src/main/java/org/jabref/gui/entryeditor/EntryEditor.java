@@ -188,7 +188,7 @@ public class EntryEditor extends BorderPane {
                 activeTab.notifyAboutFocus(currentlyEditedEntry);
             }
         });
-  // change - Chris
+/*  // change - Chris
     
   // Pastes clipboard content into the 'note' field of the currently edited entry
 private void pasteEntry() {
@@ -258,7 +258,7 @@ private void refreshEntry() {
     System.out.println("Entry refreshed!");
 }
 }
-//end change - Chris
+//end change - Chris */
         EasyBind.listen(preferences.getPreviewPreferences().showPreviewAsExtraTabProperty(),
                 (obs, oldValue, newValue) -> {
                     if (currentlyEditedEntry != null) {
@@ -447,6 +447,26 @@ private void refreshEntry() {
      * Set up key bindings specific for the entry editor.
      */
     private void setupKeyBindings() {
+       /*  //change - Chris
+        KeyCodeCombination refreshCombination = keyBindingRepository.getKeyBinding(KeyBinding.REFRESH_ENTRY)
+        .map(binding -> (KeyCodeCombination) binding.getKeyCombination())
+        .orElse(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN));
+
+// Define key binding for Ctrl+V (Paste)
+KeyCodeCombination pasteCombination = keyBindingRepository.getKeyBinding(KeyBinding.PASTE_ENTRY)
+        .map(binding -> (KeyCodeCombination) binding.getKeyCombination())
+        .orElse(new KeyCodeCombination(KeyCode.V, KeyCombination.CONTROL_DOWN));
+
+        this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+
+    if (refreshCombination.match(event)) {
+        refreshEntry();  // For Ctrl+R
+        event.consume();
+    } else if (pasteCombination.match(event)) {
+        pasteEntry();  // For Ctrl+V
+        event.consume();
+    }
+}); //change end - Chris */
         this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             Optional<KeyBinding> keyBinding = keyBindingRepository.mapToKeyBinding(event);
             if (keyBinding.isPresent()) {
@@ -482,6 +502,10 @@ private void refreshEntry() {
                         close();
                         event.consume();
                         break;
+                     /*   case REFRESH_ENTRY: //change - Chris
+                        refreshEntry();
+                        event.consume();
+                        //change end - Chris */
                     default:
                         // Pass other keys to parent
                 }
